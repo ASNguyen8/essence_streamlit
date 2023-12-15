@@ -52,9 +52,17 @@ def mean_per_station(data, col: str):
         for m in range(1, 13):
             k = f"{year}-{'0'*(m<10)}{m}"
             tmp = data[col][(data['Date'].dt.year == year) & (data['Date'].dt.month == m)]
-            date[k] = tmp.sum() / tmp.shape[0]
+            date[k] = tmp.sum() / tmp.shape[0] if tmp.shape[0] else 0
     new_df = pd.DataFrame(zip(date.keys(), date.values()), columns=['Mois', f"{col}_per_station"])
     return new_df
+
+
+def time_gap(data):
+    dates = df.sort_values(by="Date", ascending=True)["Date"].tolist()
+    gaps = [(dates[i]-dates[i-1]).days for i in range(1, len(dates))]
+    x = list(range(1, len(dates)))
+    new_data = pd.DataFrame(zip(x, gaps), columns=["Station", "Jours"])
+    return new_data
 
 
 if __name__ == "__main__":
@@ -62,13 +70,14 @@ if __name__ == "__main__":
     df = load_csv()
     
     # Charts
-    st.write(f"""
-    # Voici un récapitulatif de mes dépenses en carburant depuis le {beggining(df)}
-    """)
+    st.write(f"Voici un récapitulatif de mes dépenses en carburant depuis le {beggining(df)}")
+
+    st.title("Suivi des dépenses dans le temps")
+
+    st.write("Nombre de jours entre deux achats en station")
+    st.line_chart(time_gap(df), x='Station', y='Jours')
     
-    st.write("""
-    ## Prix du litre d'essence
-    """)
+    st.write("### Prix du litre d'essence")
     st.scatter_chart(
         df,
         x='Date',
@@ -76,9 +85,7 @@ if __name__ == "__main__":
         color='Carburant'
     )
 
-    st.write("""
-    ## Prix de l'essence à la station
-    """)
+    st.write("### Prix de l'essence à la station")
     st.scatter_chart(
         df,
         x='Date',
@@ -86,9 +93,7 @@ if __name__ == "__main__":
         color='Carburant'
     )
 
-    st.write("""
-    ## Volume d'essence pris
-    """)
+    st.write("### Volume d'essence pris")
     st.bar_chart(
         df,
         x='Date',
@@ -96,27 +101,30 @@ if __name__ == "__main__":
         color='Carburant'
     )
 
-    st.write("""
-    ## Volume d'essence par mois
-    """)
+    st.title("Consommation totale par mois")
+    st.write("### Volume d'essence par mois")
     st.bar_chart(
         sum_per_month(df, 'Volume'),
         x='Mois',
         y='Volume'
     )
 
-    st.write("""
-    ## Prix de l'essence achetée par mois
-    """)
+    st.write("### Prix total de l'essence achetée par mois")
     st.bar_chart(
         sum_per_month(df, 'Prix'),
         x='Mois',
         y='Prix'
     )
 
-    st.write("""
-    ## Volume moyen d'essence par station par mois
-    """)
+    st.title("Consommation moyenne par mois")
+    st.write("### Coût moyen de l'essence par mois")
+    st.bar_chart(
+        mean_per_station(df, "Prix"),
+        x="Mois",
+        y="Prix_per_station"
+    )
+
+    st.write("### Volume moyen d'essence par station par mois")
     st.bar_chart(
         mean_per_station(df, 'Volume'),
         x='Mois',
@@ -125,22 +133,7 @@ if __name__ == "__main__":
 
     # Sidebar
     with st.sidebar.header("Sommaire"):
-        st.sidebar.markdown("""
-        [Prix du litre d'essence](#prix-du-litre-d-essence)
-        """)
-        st.sidebar.markdown("""
-        [Prix de l'essence à la station](#2aa0251c)
-        """)
-        st.sidebar.markdown("""
-        [Volume d'essence pris](#volume-d-essence-pris)
-        """)
-        st.sidebar.markdown("""
-        [Volume d'essence par mois](#volume-d-essence-par-mois)
-        """)
-        st.sidebar.markdown("""
-        [Prix de l'essence achetée par mois](#87e6d834)
-        """)
-        st.sidebar.markdown("""
-        [Volume moyen d'essence par station par mois](#volume-moyen-d-essence-par-station-par-mois)
-        """)
+        st.sidebar.markdown("[Suivi des dépenses dans le temps](#2e66de86)")
+        st.sidebar.markdown("[Consommation totale par mois](#consommation-totale-par-mois)")
+        st.sidebar.markdown("[Consommation moyenne par mois](#consommation-moyenne-par-mois)")
         
